@@ -29,7 +29,12 @@ const projectSchema = new mongoose.Schema({
         email: { type: String, required: true }
     },
     status: { type: String, default: 'draft' },
-    components: [componentSchema]
+    components: [componentSchema],
+    // Add reference to Schema model
+    schema: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Schema'
+    }
 }, { timestamps: true });
 
 export default mongoose.model('Project', projectSchema);

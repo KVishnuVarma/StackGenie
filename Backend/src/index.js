@@ -5,6 +5,7 @@ import ConnectDB from './config/db.js';
 
 import authRoutes from './routes/authRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
+import schemaRoutes from './routes/schemaRoutes.js';
 // import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
@@ -19,6 +20,7 @@ ConnectDB();
 
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
+app.use("/api/projects/:projectId/schema", schemaRoutes);
 // app.use("/api/ai", aiRoutes);
 
 
