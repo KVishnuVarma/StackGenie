@@ -9,6 +9,7 @@ import schemaRoutes from './routes/schemaRoutes.js';
 import apiRoutes from './routes/apiRoutes.js';
 import customRoutes from './routes/customRoutes.js';
 import webhookRoutes from './routes/webhookRoutes.js';
+import deploymentRoutes from './routes/deploymentRoutes.js';
 // import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
@@ -27,6 +28,7 @@ app.use("/api/projects/:projectId/schema", schemaRoutes);
 app.use("/api/crud", apiRoutes);
 app.use("/api/custom", customRoutes);
 app.use("/api/webhooks", webhookRoutes);
+app.use("/api/deployments", deploymentRoutes);
 // app.use("/api/ai", aiRoutes);
 
 

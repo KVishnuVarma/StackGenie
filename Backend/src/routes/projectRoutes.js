@@ -8,8 +8,12 @@ import {
 } from "../controllers/projectController.js";
 import { generateProject } from "../controllers/aiController.js";
 import aiLimiter from "../middlewares/aiRateLimiter.js";
+import { protect } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(protect);
 
 // General project management routes
 router.post("/", createProject);
