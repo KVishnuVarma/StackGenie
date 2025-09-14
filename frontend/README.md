@@ -152,7 +152,7 @@ The frontend integrates with the StackGenie backend API:
 
 ## 🚀 Getting Started
 
-1. **Start the Backend**: Ensure the StackGenie backend is running on `http://localhost:3001`
+1. **Start the Backend**: Ensure the StackGenie backend is running on `http://localhost:5000`
 
 2. **Run the Frontend**:
    ```bash

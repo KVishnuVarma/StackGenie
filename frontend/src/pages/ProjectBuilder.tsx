@@ -4,21 +4,26 @@ import {
   Save, 
   Eye, 
   Code, 
-  Palette, 
   Layers, 
-  Settings,
   ArrowLeft,
-  Plus
+  Zap
 } from 'lucide-react'
-import { DndContext, DragOverlay } from '@dnd-kit/core'
+import { DndContext } from '@dnd-kit/core'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
 import { projectAPI, type Project, type Component } from '../services/api'
-// The following imports may cause errors if the files do not exist.
-// Please ensure these components exist in the specified paths.
 import ComponentPalette from '../components/ComponentPalette'
 import Canvas from '../components/Canvas'
 import PropertiesPanel from '../components/PropertiesPanel'
+import ConnectionPanel from '../components/ConnectionPanel'
 import toast from 'react-hot-toast'
+
+interface Connection {
+  id: string
+  from: string
+  to: string
+  type: 'data' | 'action' | 'parent-child'
+  label?: string
+}
 
 export default function ProjectBuilder() {
   const { projectId } = useParams<{ projectId: string }>()
@@ -27,7 +32,8 @@ export default function ProjectBuilder() {
   const [selectedComponent, setSelectedComponent] = useState<Component | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'canvas' | 'code' | 'preview'>('canvas')
+  const [activeTab, setActiveTab] = useState<'canvas' | 'code' | 'preview' | 'connections'>('canvas')
+  const [connections, setConnections] = useState<Connection[]>([])
 
   useEffect(() => {
     if (projectId) {
@@ -39,7 +45,20 @@ export default function ProjectBuilder() {
     try {
       const response = await projectAPI.getById(projectId!)
       setProject(response.data)
-      setComponents(response.data.components || [])
+      const projectComponents = response.data.components || []
+      
+      // Add unique IDs to components if they don't have them
+      const componentsWithIds = projectComponents.map((comp: Component, index: number) => ({
+        ...comp,
+        id: comp.id || `comp-${index}-${Date.now()}`
+      }))
+      
+      setComponents(componentsWithIds)
+      
+      // Load connections from project data (if stored)
+      if (response.data.connections) {
+        setConnections(response.data.connections)
+      }
     } catch (error) {
       console.error('Failed to load project:', error)
       toast.error('Failed to load project')
@@ -62,7 +81,22 @@ export default function ProjectBuilder() {
     }
   }
 
-  const handleDragStart = (event: DragStartEvent) => {
+  // Connection management functions
+  const handleAddConnection = (connection: Omit<Connection, 'id'>) => {
+    const newConnection: Connection = {
+      ...connection,
+      id: `conn-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    }
+    setConnections(prev => [...prev, newConnection])
+    toast.success('Connection added successfully!')
+  }
+
+  const handleRemoveConnection = (connectionId: string) => {
+    setConnections(prev => prev.filter(conn => conn.id !== connectionId))
+    toast.success('Connection removed successfully!')
+  }
+
+  const handleDragStart = (_event: DragStartEvent) => {
     // Handle drag start if needed
   }
 
@@ -72,6 +106,7 @@ export default function ProjectBuilder() {
     if (over && active.data.current) {
       const componentType = active.data.current.type
       const newComponent: Component = {
+        id: `comp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         type: componentType,
         props: {
           name: `${componentType}_${Date.now()}`,
@@ -233,6 +268,7 @@ export default GeneratedComponent;`
             <nav className="-mb-px flex space-x-8">
               {[
                 { id: 'canvas', name: 'Canvas', icon: Layers },
+                { id: 'connections', name: 'Connections', icon: Zap },
                 { id: 'code', name: 'Code', icon: Code },
                 { id: 'preview', name: 'Preview', icon: Eye }
               ].map((tab) => (
@@ -289,6 +325,16 @@ export default GeneratedComponent;`
                 />
               </div>
             )}
+
+            {activeTab === 'canvas' && selectedComponent && (
+              <ConnectionPanel
+                selectedComponent={selectedComponent}
+                components={components}
+                connections={connections}
+                onAddConnection={handleAddConnection}
+                onRemoveConnection={handleRemoveConnection}
+              />
+            )}
           </div>
 
           {/* Main Area */}
@@ -299,7 +345,117 @@ export default GeneratedComponent;`
                 selectedComponent={selectedComponent}
                 onSelectComponent={setSelectedComponent}
                 onUpdateComponent={(index, updates) => updateComponent(index, updates)}
+                connections={connections}
+                onAddConnection={handleAddConnection}
+                onRemoveConnection={handleRemoveConnection}
               />
+            )}
+
+            {activeTab === 'connections' && (
+              <div className="flex-1 flex">
+                <div className="flex-1 bg-gray-50 p-6">
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Connection Overview</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-green-100 rounded-lg">
+                            <Zap className="h-5 w-5 text-green-600" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">Data Flow</p>
+                            <p className="text-2xl font-bold text-green-600">
+                              {connections.filter(c => c.type === 'data').length}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-blue-100 rounded-lg">
+                            <Zap className="h-5 w-5 text-blue-600" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">Actions</p>
+                            <p className="text-2xl font-bold text-blue-600">
+                              {connections.filter(c => c.type === 'action').length}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <div className="p-2 bg-purple-100 rounded-lg">
+                            <Zap className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-gray-900">Hierarchy</p>
+                            <p className="text-2xl font-bold text-purple-600">
+                              {connections.filter(c => c.type === 'parent-child').length}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {connections.length === 0 ? (
+                      <div className="text-center py-12">
+                        <Zap className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <h4 className="text-lg font-medium text-gray-900 mb-2">No Connections Yet</h4>
+                        <p className="text-gray-500 mb-4">
+                          Create connections between components to build interactive flows
+                        </p>
+                        <button
+                          onClick={() => setActiveTab('canvas')}
+                          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+                        >
+                          <Layers className="h-4 w-4 mr-2" />
+                          Go to Canvas
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium text-gray-900">All Connections</h4>
+                        {connections.map((connection) => {
+                          const fromComponent = components.find(c => c.id === connection.from)
+                          const toComponent = components.find(c => c.id === connection.to)
+                          
+                          return (
+                            <div key={connection.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-3">
+                                  <div className={`p-2 rounded-lg ${
+                                    connection.type === 'data' ? 'bg-green-100 text-green-600' :
+                                    connection.type === 'action' ? 'bg-blue-100 text-blue-600' :
+                                    'bg-purple-100 text-purple-600'
+                                  }`}>
+                                    <Zap className="h-4 w-4" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">
+                                      {fromComponent?.type} → {toComponent?.type}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {connection.type.replace('-', ' ').toUpperCase()}
+                                      {connection.label && ` • ${connection.label}`}
+                                    </p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => handleRemoveConnection(connection.id)}
+                                  className="p-1 text-red-400 hover:text-red-600"
+                                >
+                                  <Zap className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
             )}
             
             {activeTab === 'code' && (

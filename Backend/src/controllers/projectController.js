@@ -62,10 +62,9 @@ export const getProjects = async (req, res) => {
 
     // Only get projects for the authenticated user
     const projects = await Project.find({ userId: req.user._id });
-    if (!projects || projects.length === 0) {
-      return res.status(404).json({ message: "No projects found" });
-    }
-    res.json(projects);
+    
+    // Return empty array instead of 404 when no projects found
+    res.json(projects || []);
   } catch (err) {
     res.status(500).json({ error: 'Failed to retrieve projects', details: err.message });
   }

@@ -1,6 +1,23 @@
 import mongoose from 'mongoose';
 
-// Enhanced component schema to store drag-and-drop properties
+// Define interface for connection points
+const connectionPointSchema = new mongoose.Schema({
+    id: { type: String, required: true },
+    type: { type: String, enum: ['input', 'output'], required: true },
+    position: { type: String, enum: ['top', 'right', 'bottom', 'left'], required: true },
+    connected: { type: Boolean, default: false },
+    connectedTo: { type: String }, // ID of the connected point
+}, { _id: false });
+
+// Define interface for component connections
+const connectionSchema = new mongoose.Schema({
+    sourceId: { type: String, required: true }, // ID of source connection point
+    targetId: { type: String, required: true }, // ID of target connection point
+    sourceComponentId: { type: String, required: true },
+    targetComponentId: { type: String, required: true },
+}, { _id: false });
+
+// Enhanced component schema to store drag-and-drop and connection properties
 const componentSchema = new mongoose.Schema({
     type: { type: String, required: true }, // e.g., "Button", "Card"
     props: {
@@ -17,6 +34,8 @@ const componentSchema = new mongoose.Schema({
             default: {}
         }
     },
+    connectionPoints: [connectionPointSchema],
+    connections: [connectionSchema],
     code: { type: String }, // The code snippet for the component
 }, { _id: false });
 

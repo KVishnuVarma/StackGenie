@@ -78,10 +78,17 @@ export default function ComponentLibrary() {
   const loadComponents = async () => {
     try {
       const response = await componentAPI.getAll()
-      setComponents(response.data)
+      
+      // Handle response format from responseHandler
+      if (response.data.success) {
+        setComponents(response.data.data || [])
+      } else {
+        setComponents([])
+      }
     } catch (error) {
       console.error('Failed to load components:', error)
       toast.error('Failed to load components')
+      setComponents([])
     } finally {
       setLoading(false)
     }
@@ -94,14 +101,19 @@ export default function ComponentLibrary() {
     }
 
     try {
-      await componentAPI.create({
+      const response = await componentAPI.create({
         ...newComponent,
         projectId: 'library' // For library components
       })
-      toast.success('Component created successfully!')
-      setShowCreateModal(false)
-      setNewComponent({ name: '', type: '', description: '', configuration: {} })
-      loadComponents()
+      
+      if (response.data.success) {
+        toast.success('Component created successfully!')
+        setShowCreateModal(false)
+        setNewComponent({ name: '', type: '', description: '', configuration: {} })
+        loadComponents()
+      } else {
+        toast.error('Failed to create component')
+      }
     } catch (error) {
       console.error('Failed to create component:', error)
       toast.error('Failed to create component')
@@ -112,9 +124,14 @@ export default function ComponentLibrary() {
     if (!confirm('Are you sure you want to delete this component?')) return
 
     try {
-      await componentAPI.delete(id)
-      setComponents(components.filter(c => c._id !== id))
-      toast.success('Component deleted successfully!')
+      const response = await componentAPI.delete(id)
+      
+      if (response.data.success) {
+        setComponents(components.filter(c => c._id !== id))
+        toast.success('Component deleted successfully!')
+      } else {
+        toast.error('Failed to delete component')
+      }
     } catch (error) {
       console.error('Failed to delete component:', error)
       toast.error('Failed to delete component')

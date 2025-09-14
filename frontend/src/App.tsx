@@ -8,11 +8,18 @@ import SchemaDesigner from './pages/SchemaDesigner'
 import ComponentLibrary from './pages/ComponentLibrary'
 import DeploymentCenter from './pages/DeploymentCenter'
 import AIGenerator from './pages/AIGenerator'
+import Login from './pages/Login'
+import Register from './pages/Register'
 
 function App() {
   return (
     <Layout>
       <Routes>
+        {/* Authentication Routes */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        
+        {/* Main Application Routes */}
         <Route path="/" element={<Dashboard />} />
         <Route path="/projects" element={<ProjectList />} />
         <Route path="/projects/create" element={<CreateProject />} />

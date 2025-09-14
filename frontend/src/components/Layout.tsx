@@ -1,17 +1,19 @@
-import { ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { 
   Home, 
   FolderOpen, 
   Plus, 
   Puzzle, 
-  Database, 
-  Rocket, 
   Sparkles,
   Menu,
-  X
+  X,
+  LogOut,
+  User
 } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
+import toast from 'react-hot-toast'
 
 interface LayoutProps {
   children: ReactNode
@@ -23,12 +25,44 @@ const navigation = [
   { name: 'Create Project', href: '/projects/create', icon: Plus },
   { name: 'Components', href: '/components', icon: Puzzle },
   { name: 'AI Generator', href: '/ai-generator', icon: Sparkles },
-  { name: 'Deployments', href: '/deployments', icon: Rocket },
 ]
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { user, loading, logout } = useAuth()
+
+  // Check if current route is auth route
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/register'
+
+  const handleLogout = () => {
+    logout()
+    toast.success('Logged out successfully')
+    window.location.href = '/login'
+  }
+
+  // Show auth pages without sidebar
+  if (isAuthRoute) {
+    return <>{children}</>
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect to login if not authenticated
+  if (!user) {
+    window.location.href = '/login'
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -65,6 +99,22 @@ export default function Layout({ children }: LayoutProps) {
               )
             })}
           </nav>
+          <div className="border-t border-gray-200 p-4">
+            <div className="flex items-center">
+              <User className="h-8 w-8 text-gray-400" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">{user.name}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="mt-3 w-full flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md"
+            >
+              <LogOut className="mr-3 h-5 w-5" />
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
 
@@ -93,6 +143,22 @@ export default function Layout({ children }: LayoutProps) {
               )
             })}
           </nav>
+          <div className="border-t border-gray-200 p-4">
+            <div className="flex items-center">
+              <User className="h-8 w-8 text-gray-400" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">{user.name}</p>
+                <p className="text-xs text-gray-500">{user.email}</p>
+              </div>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="mt-3 w-full flex items-center px-2 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md"
+            >
+              <LogOut className="mr-3 h-5 w-5" />
+              Sign out
+            </button>
+          </div>
         </div>
       </div>
 
@@ -108,7 +174,7 @@ export default function Layout({ children }: LayoutProps) {
               <Menu className="h-6 w-6" />
             </button>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Welcome to StackGenie</span>
+              <span className="text-sm text-gray-500">Welcome back, {user.name}!</span>
             </div>
           </div>
         </div>

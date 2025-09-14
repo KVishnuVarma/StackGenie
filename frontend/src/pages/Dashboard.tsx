@@ -9,7 +9,7 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react'
-import { projectAPI, deploymentAPI, type Project, type Deployment } from '../services/api'
+import { projectAPI, type Project, type Deployment } from '../services/api'
 import toast from 'react-hot-toast'
 
 export default function Dashboard() {
@@ -23,16 +23,29 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
-      const [projectsRes, deploymentsRes] = await Promise.all([
-        projectAPI.getAll(),
-        deploymentAPI.getProjectDeployments('recent') // This would need backend support
-      ])
+      const projectsRes = await projectAPI.getAll()
       
-      setProjects(projectsRes.data.slice(0, 5)) // Show latest 5 projects
-      setDeployments(deploymentsRes.data.slice(0, 3)) // Show latest 3 deployments
-    } catch (error) {
+      // Backend now returns projects array directly
+      const projectsData = projectsRes.data
+      setProjects(projectsData.slice(0, 5)) // Show latest 5 projects
+      
+      // For now, we'll show empty deployments since we need specific project IDs
+      // In a real app, you might want to get recent deployments across all projects
+      setDeployments([])
+    } catch (error: any) {
       console.error('Failed to load dashboard data:', error)
-      toast.error('Failed to load dashboard data')
+      
+      // Handle specific error cases
+      if (error.response?.status === 404) {
+        // No projects found - this is normal for new users
+        setProjects([])
+        setDeployments([])
+      } else if (error.response?.status === 401) {
+        toast.error('Please log in again')
+        // Redirect to login will be handled by Layout component
+      } else {
+        toast.error('Failed to load dashboard data')
+      }
     } finally {
       setLoading(false)
     }
